@@ -3,396 +3,306 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>寢具庫存盤點表</title>
+    <title>線上摸彩機</title>
     <script src="https://cdn.tailwindcss.com" defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <!-- GitHub Pages 環境變數橋接（請編輯 config.js） -->
-    <script src="./config.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', 'Noto Sans TC', sans-serif; background-color: #FAE1DF; }
-        .table-cell { padding: 8px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; white-space: nowrap; }
-        .summary-card { background-color: white; border-radius: 0.75rem; padding: 0.75rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1); transition: all 0.3s ease; }
-        .summary-card:hover { transform: translateY(-5px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1); }
-        input[type="checkbox"] { width: 1.25rem; height: 1.25rem; cursor: pointer; }
-        .modal-backdrop { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; align-items: center; z-index: 50; }
-        .modal-content { background-color: white; padding: 1.5rem; border-radius: 0.5rem; width: 90%; max-width: 500px; }
+        body { font-family: 'Noto Sans TC', 'Inter', sans-serif; background: radial-gradient(circle at top, #FEE2E2, #DBEAFE); }
+        .glass-card { background: rgba(255, 255, 255, 0.85); backdrop-filter: blur(12px); border-radius: 1rem; box-shadow: 0 20px 60px -25px rgba(15, 23, 42, 0.45); }
+        .lottery-badge { display: inline-flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0.75rem; border-radius: 9999px; background: linear-gradient(135deg, #6366F1, #EC4899); color: white; font-size: 0.75rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; }
+        .winner-highlight { animation: pulse 1.5s ease-in-out 1; }
+        @keyframes pulse { 0% { transform: scale(0.9); opacity: 0.3; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
-<body class="text-gray-800 p-4 sm:p-6 lg:p-8">
-
-    <div class="max-w-7xl mx-auto">
-        <header class="mb-6 sm:mb-8">
-            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">寢具庫存盤點表 (雲端版)</h1>
-            <p class="text-gray-600 mt-1 text-sm sm:text-base">一個簡單的工具來追蹤寢具的進出貨記錄，並即時同步到雲端。</p>
+<body class="min-h-screen text-slate-800 px-4 py-6 sm:py-10">
+    <div class="max-w-6xl mx-auto space-y-8">
+        <header class="text-center space-y-4">
+            <span class="lottery-badge">Lucky Draw</span>
+            <h1 class="text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">線上摸彩抽獎機</h1>
+            <p class="text-slate-600 max-w-2xl mx-auto">建立參加名單、設定籤數，按下抽獎鍵即可隨機選出幸運兒。資料僅存於本地瀏覽器，適合快速小型活動或抽獎遊戲。</p>
         </header>
 
-        <div class="grid grid-cols-2 gap-2 sm:gap-6 mb-6 sm:mb-8">
-            <div class="summary-card">
-                <h2 class="text-xs sm:text-sm font-semibold text-gray-500">預計剩餘數量</h2>
-                <p id="projectedStock" class="text-xl md:text-2xl font-bold text-green-600">0</p>
-                <p class="text-[10px] sm:text-xs text-gray-400 mt-1">所有進貨 - 所有出貨</p>
-            </div>
-            <div class="summary-card">
-                <h2 class="text-xs sm:text-sm font-semibold text-gray-500">實際剩餘數量</h2>
-                <p id="actualStock" class="text-xl md:text-2xl font-bold text-red-600">0</p>
-                <p class="text-[10px] sm:text-xs text-gray-400 mt-1">所有進貨 - 已發放的出貨</p>
-            </div>
-        </div>
+        <main class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <section class="lg:col-span-2 space-y-6">
+                <div class="glass-card p-6 space-y-4">
+                    <h2 class="text-xl font-semibold text-slate-900">新增參加者</h2>
+                    <form id="addForm" class="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
+                        <label class="md:col-span-3">
+                            <span class="block text-sm font-medium text-slate-600">參加者姓名</span>
+                            <input id="nameInput" type="text" required placeholder="例如：王小明" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                        </label>
+                        <label class="md:col-span-1">
+                            <span class="block text-sm font-medium text-slate-600">籤數</span>
+                            <input id="ticketInput" type="number" min="1" max="50" value="1" class="mt-1 w-full rounded-lg border border-slate-200 px-3 py-2 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" />
+                        </label>
+                        <button type="submit" class="md:col-span-1 inline-flex justify-center items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700">新增</button>
+                    </form>
+                    <div class="border-t border-slate-200 pt-4 space-y-3">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                            <h3 class="text-sm font-semibold text-slate-700">批次匯入</h3>
+                            <button id="sampleBtn" class="text-xs font-medium text-indigo-600 hover:underline">載入範例資料</button>
+                        </div>
+                        <textarea id="bulkInput" rows="3" placeholder="每行輸入：姓名, 籤數（可省略，預設 1）" class="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm shadow-sm focus:border-indigo-500 focus:ring-indigo-500"></textarea>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-between">
+                            <button id="bulkAddBtn" class="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-600 px-4 py-2 text-sm font-semibold text-indigo-600 transition hover:bg-indigo-50">匯入資料</button>
+                            <button id="clearBtn" class="inline-flex items-center justify-center gap-2 rounded-lg border border-rose-500 px-4 py-2 text-sm font-semibold text-rose-500 transition hover:bg-rose-50">清空名單</button>
+                        </div>
+                        <p id="bulkStatus" class="text-xs text-rose-500"></p>
+                    </div>
+                </div>
 
-        <div class="bg-white rounded-lg shadow p-4 sm:p-6 mb-6 sm:mb-8">
-            <h2 class="text-lg font-bold mb-4">進銷存</h2>
-            <form id="inventoryForm" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 items-end">
-                <div>
-                    <label for="date" class="block text-sm font-medium text-gray-700">A. 日期</label>
-                    <input type="date" id="date" class="mt-1 block max-w-[150px] rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" required>
+                <div class="glass-card p-6 space-y-4">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <h2 class="text-xl font-semibold text-slate-900">參加名單</h2>
+                        <p class="text-sm text-slate-500" id="participantStats">共 0 人／0 籤</p>
+                    </div>
+                    <div class="overflow-hidden rounded-lg border border-slate-200">
+                        <table class="min-w-full divide-y divide-slate-200 text-sm">
+                            <thead class="bg-slate-50">
+                                <tr>
+                                    <th class="px-4 py-3 text-left font-semibold text-slate-600">姓名</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-600">籤數</th>
+                                    <th class="px-4 py-3 text-center font-semibold text-slate-600">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="participantBody" class="divide-y divide-slate-100 bg-white"></tbody>
+                        </table>
+                    </div>
+                    <p class="text-xs text-slate-500">籤數代表該參與者在抽獎池中擁有的機率權重。</p>
                 </div>
-                <div>
-                    <label for="customer" class="block text-sm font-medium text-gray-700">B. 客戶</label>
-                    <input type="text" id="customer" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="例如：ABC飯店" required>
-                </div>
-                 <div>
-                    <label for="type" class="block text-sm font-medium text-gray-700">類型</label>
-                    <select id="type" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                        <option value="out">出貨 (-)</option>
-                        <option value="in">進貨 (+)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="quantity" class="block text-sm font-medium text-gray-700">C. 數量</label>
-                    <input type="number" id="quantity" min="1" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="例如：100" required>
-                </div>
-                <div class="col-span-1 md:col-span-2 lg:col-span-4 flex justify-end gap-2">
-                     <button type="submit" class="w-full sm:w-auto bg-indigo-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition">
-                         新增
-                    </button>
-                    <button id="openBulkModalBtn" type="button" class="w-full sm:w-auto bg-gray-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition">
-                        批量新增
-                    </button>
-                </div>
-            </form>
-        </div>
+            </section>
 
-        <div class="bg-white rounded-lg shadow overflow-x-auto">
-            <table class="w-full text-sm text-left">
-                <thead class="bg-gray-50">
-                    <tr>
-                        <th class="table-cell font-semibold">A. 日期</th>
-                        <th class="table-cell font-semibold">B. 客戶</th>
-                        <th class="table-cell font-semibold text-center">類型</th>
-                        <th class="table-cell font-semibold text-right">C. 數量</th>
-                        <th class="table-cell font-semibold text-center">D. 是否發放</th>
-                        <th class="table-cell font-semibold text-center">E. 繳回簽收單</th>
-                        <th class="table-cell font-semibold text-center">操作</th>
-                    </tr>
-                </thead>
-                <tbody id="inventoryTableBody"></tbody>
-            </table>
-             <div id="emptyState" class="text-center py-12 text-gray-500">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">沒有記錄</h3>
-                <p class="mt-1 text-sm text-gray-500">開始新增一筆新的進出貨記錄吧。</p>
-            </div>
-        </div>
-    </div>
-    
-    <div id="deleteModal" class="modal-backdrop hidden">
-        <div class="modal-content">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">確認刪除</h3>
-            <div class="mt-2">
-                <p class="text-sm text-gray-500">您確定要刪除這筆記錄嗎？此操作無法復原。</p>
-            </div>
-            <div class="mt-5 sm:mt-4 sm:flex sm:flex-row-reverse">
-                <button id="confirmDeleteBtn" type="button" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-red-600 text-base font-medium text-white hover:bg-red-700 sm:ml-3 sm:text-sm">
-                    刪除
-                </button>
-                <button id="cancelDeleteBtn" type="button" class="mt-3 w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:text-sm">
-                    取消
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div id="bulkModal" class="modal-backdrop hidden">
-        <div class="modal-content">
-            <h3 class="text-lg leading-6 font-medium text-gray-900">進銷存 (批量新增)</h3>
-            <p class="text-sm text-gray-600 mt-2 mb-4">請將多筆記錄貼到下面的文字框中，每行一筆，格式為：`日期, 客戶, 類型, 數量` (類型請輸入：`出貨` 或 `進貨`)</p>
-            <form id="bulkInventoryForm" class="flex flex-col gap-4">
-                <textarea id="bulkInput" rows="6" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="例如：&#10;10/26, 王小姐, 出貨, 50&#10;10/25, ABC飯店, 進貨, 200&#10;10/24, 陳先生, 出貨, 10"></textarea>
-                <p id="bulkStatus" class="text-sm text-red-500"></p>
-                <div class="flex justify-end mt-4">
-                    <button id="closeBulkModalBtn" type="button" class="mt-3 w-full sm:w-auto inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg白 text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:text-sm">
-                        取消
+            <aside class="space-y-6">
+                <div class="glass-card p-6 space-y-4">
+                    <h2 class="text-xl font-semibold text-slate-900">開始抽獎</h2>
+                    <label class="flex items-center gap-2 text-sm text-slate-600">
+                        <input type="checkbox" id="removeAfterDraw" class="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" checked>
+                        抽出後自名單移除
+                    </label>
+                    <button id="drawBtn" class="w-full inline-flex justify-center items-center gap-2 rounded-xl bg-rose-500 px-4 py-3 font-semibold text-white text-lg shadow-lg shadow-rose-200 transition hover:bg-rose-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-rose-400">
+                        開始抽獎
                     </button>
-                    <button type="submit" class="w-full sm:w-auto inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-gray-600 text-base font-medium text-white hover:bg-gray-700 sm:ml-3 sm:text-sm">
-                        批量新增
-                    </button>
+                    <div class="rounded-xl border border-rose-100 bg-white/70 px-4 py-6 text-center shadow-inner">
+                        <p class="text-sm text-slate-500 mb-2">本輪幸運兒</p>
+                        <p id="winnerName" class="text-2xl font-bold text-rose-600">尚未抽出</p>
+                        <p id="winnerTickets" class="text-xs text-slate-400 mt-1"></p>
+                    </div>
                 </div>
-            </form>
-        </div>
+
+                <div class="glass-card p-6 space-y-4">
+                    <h2 class="text-xl font-semibold text-slate-900">歷史紀錄</h2>
+                    <ul id="historyList" class="space-y-3 text-sm text-slate-600">
+                        <li class="text-slate-400">尚無抽獎紀錄</li>
+                    </ul>
+                </div>
+            </aside>
+        </main>
     </div>
 
-    <!-- Firebase SDK as ES Modules -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, onSnapshot, collection, addDoc, updateDoc, deleteDoc, writeBatch, query } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    <script>
+        const addForm = document.getElementById('addForm');
+        const nameInput = document.getElementById('nameInput');
+        const ticketInput = document.getElementById('ticketInput');
+        const participantBody = document.getElementById('participantBody');
+        const participantStats = document.getElementById('participantStats');
+        const drawBtn = document.getElementById('drawBtn');
+        const winnerName = document.getElementById('winnerName');
+        const winnerTickets = document.getElementById('winnerTickets');
+        const removeAfterDraw = document.getElementById('removeAfterDraw');
+        const historyList = document.getElementById('historyList');
+        const clearBtn = document.getElementById('clearBtn');
+        const bulkInput = document.getElementById('bulkInput');
+        const bulkAddBtn = document.getElementById('bulkAddBtn');
+        const bulkStatus = document.getElementById('bulkStatus');
+        const sampleBtn = document.getElementById('sampleBtn');
 
-        // --- DOM Ready ---
-        document.addEventListener('DOMContentLoaded', () => {
-            const inventoryForm = document.getElementById('inventoryForm');
-            const inventoryTableBody = document.getElementById('inventoryTableBody');
-            const projectedStockEl = document.getElementById('projectedStock');
-            const actualStockEl = document.getElementById('actualStock');
-            const emptyState = document.getElementById('emptyState');
-            const deleteModal = document.getElementById('deleteModal');
-            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-            const cancelDeleteBtn = document.getElementById('cancelDeleteBtn');
-            const openBulkModalBtn = document.getElementById('openBulkModalBtn');
-            const bulkModal = document.getElementById('bulkModal');
-            const closeBulkModalBtn = document.getElementById('closeBulkModalBtn');
-            const bulkInventoryForm = document.getElementById('bulkInventoryForm');
-            const bulkInput = document.getElementById('bulkInput');
-            const bulkStatus = document.getElementById('bulkStatus');
+        let participants = [];
+        let drawInProgress = false;
 
-            // --- App State ---
-            let localInventory = [];
-            let itemToDeleteId = null;
-            let db, auth;
+        function renderParticipants() {
+            participantBody.innerHTML = '';
+            if (!participants.length) {
+                participantBody.innerHTML = '<tr><td colspan="3" class="px-4 py-6 text-center text-slate-400">尚未新增任何參加者</td></tr>';
+            } else {
+                participants.forEach((person) => {
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td class="px-4 py-3 font-medium text-slate-700">${person.name}</td>
+                        <td class="px-4 py-3 text-center text-slate-500">${person.tickets}</td>
+                        <td class="px-4 py-3 text-center">
+                            <button class="text-sm font-medium text-rose-500 hover:text-rose-600" data-action="remove" data-id="${person.id}">移除</button>
+                        </td>`;
+                    participantBody.appendChild(row);
+                });
+            }
+            updateStats();
+        }
 
-            // --- Firebase Setup ---
-            const appId = (typeof __app_id !== 'undefined') ? __app_id : 'bedding-inventory-app';
-            const firebaseConfig = (typeof __firebase_config !== 'undefined') ? JSON.parse(__firebase_config) : null;
-            const initialAuthToken = (typeof __initial_auth_token !== 'undefined') ? __initial_auth_token : null;
+        function updateStats() {
+            const totalTickets = participants.reduce((sum, p) => sum + p.tickets, 0);
+            participantStats.textContent = `共 ${participants.length} 人／${totalTickets} 籤`;
+        }
 
-            if (!firebaseConfig) {
-                console.error('找不到 Firebase 設定，請在 config.js 填入 __firebase_config');
-                alert('找不到 Firebase 設定，請先編輯 config.js');
+        function showBulkStatus(message, success = false) {
+            bulkStatus.textContent = message;
+            bulkStatus.classList.toggle('text-rose-500', !success);
+            bulkStatus.classList.toggle('text-emerald-600', success);
+        }
+
+        function addParticipant(name, tickets) {
+            const trimmed = name.trim();
+            if (!trimmed) return;
+            const count = Math.max(1, Math.min(50, Number(tickets) || 1));
+            const existing = participants.find(p => p.name === trimmed);
+            if (existing) {
+                existing.tickets += count;
+            } else {
+                participants.push({ id: crypto.randomUUID(), name: trimmed, tickets: count });
+            }
+            participants.sort((a, b) => a.name.localeCompare(b.name, 'zh-Hant'));
+            renderParticipants();
+        }
+
+        addForm.addEventListener('submit', (event) => {
+            event.preventDefault();
+            addParticipant(nameInput.value, ticketInput.value);
+            nameInput.value = '';
+            ticketInput.value = 1;
+            nameInput.focus();
+        });
+
+        participantBody.addEventListener('click', (event) => {
+            const target = event.target;
+            if (target.dataset.action === 'remove') {
+                participants = participants.filter(p => p.id !== target.dataset.id);
+                renderParticipants();
+            }
+        });
+
+        clearBtn.addEventListener('click', () => {
+            if (!participants.length) return;
+            if (confirm('確定要清空所有參加者嗎？')) {
+                participants = [];
+                renderParticipants();
+                winnerName.textContent = '尚未抽出';
+                winnerTickets.textContent = '';
+                historyList.innerHTML = '<li class="text-slate-400">尚無抽獎紀錄</li>';
+            }
+        });
+
+        bulkAddBtn.addEventListener('click', () => {
+            const lines = bulkInput.value.split('\n').map(line => line.trim()).filter(Boolean);
+            if (!lines.length) {
+                showBulkStatus('請輸入至少一行資料');
                 return;
             }
-
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-
-            // --- Firebase Refs ---
-            const inventoryColRef = collection(db, `/artifacts/${appId}/public/data/inventory`);
-
-            // --- Authentication ---
-            onAuthStateChanged(auth, async (user) => {
-                if (user) {
-                    setupListeners();
-                } else {
-                    try {
-                        if (initialAuthToken) {
-                            await signInWithCustomToken(auth, initialAuthToken);
-                        } else {
-                            await signInAnonymously(auth);
-                        }
-                    } catch (error) {
-                        console.error("登入失敗：", error);
-                        alert('Firebase 登入失敗，請檢查 config.js 與網路。');
-                    }
-                }
-            });
-
-            // --- Real-time Listeners ---
-            function setupListeners() {
-                const q = query(inventoryColRef);
-                onSnapshot(q, (querySnapshot) => {
-                    localInventory = [];
-                    querySnapshot.forEach((d) => localInventory.push({ id: d.id, ...d.data() }));
-                    localInventory.sort((a, b) => new Date(b.date) - new Date(a.date));
-                    renderTable();
-                    calculateStock();
-                }, (err) => {
-                    console.error('onSnapshot 錯誤：', err);
-                });
-            }
-
-            // --- Core Functions ---
-            function calculateStock() {
-                let projected = 0;
-                let actual = 0;
-                localInventory.forEach(item => {
-                    const quantity = parseInt(item.quantity);
-                    if (item.type === 'in') {
-                        projected += quantity;
-                        actual += quantity;
-                    } else {
-                        projected -= quantity;
-                        if (item.dispatched) actual -= quantity;
-                    }
-                });
-                projectedStockEl.textContent = projected;
-                actualStockEl.textContent = actual;
-            }
-
-            function renderTable() {
-                inventoryTableBody.innerHTML = '';
-                if (localInventory.length === 0) {
-                    emptyState.style.display = 'block';
+            let successCount = 0;
+            let errorLines = [];
+            lines.forEach((line, index) => {
+                const parts = line.split(',').map(part => part.trim()).filter(Boolean);
+                if (!parts.length) return;
+                const [name, ticketStr] = parts;
+                const tickets = ticketStr ? Number(ticketStr) : 1;
+                if (!name) {
+                    errorLines.push(index + 1);
                     return;
                 }
-                emptyState.style.display = 'none';
-                localInventory.forEach(item => {
-                    const row = document.createElement('tr');
-                    row.className = item.type === 'in' ? 'bg-green-50' : 'bg-red-50';
-                    const d = new Date(item.date);
-                    const formattedDate = `${d.getMonth() + 1}/${d.getDate()}`;
-                    const dispatchedCheckbox = item.type === 'out' ?
-                        `<input type="checkbox" data-id="${item.id}" class="dispatch-check" ${item.dispatched ? 'checked' : ''}>` : '';
-                    const receiptCheckbox = item.type === 'out' ?
-                        `<input type="checkbox" data-id="${item.id}" class="receipt-check" ${item.receiptReturned ? 'checked' : ''}>` : '';
-
-                    row.innerHTML = `
-                        <td class="table-cell">${formattedDate}</td>
-                        <td class="table-cell">${item.customer}</td>
-                        <td class="table-cell text-center">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${item.type === 'in' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
-                                ${item.type === 'in' ? '進貨' : '出貨'}
-                            </span>
-                        </td>
-                        <td class="table-cell text-right font-medium">${item.type === 'in' ? '+' : '-'} ${item.quantity}</td>
-                        <td class="table-cell text-center">${dispatchedCheckbox}</td>
-                        <td class="table-cell text-center">${receiptCheckbox}</td>
-                        <td class="table-cell text-center">
-                            <button data-id="${item.id}" class="delete-btn text-red-500 hover:text-red-700">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" />
-                                </svg>
-                            </button>
-                        </td>
-                    `;
-                    inventoryTableBody.appendChild(row);
-                });
-            }
-
-            // --- Events ---
-            inventoryForm.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const newItem = {
-                    date: document.getElementById('date').value,
-                    customer: document.getElementById('customer').value,
-                    type: document.getElementById('type').value,
-                    quantity: parseInt(document.getElementById('quantity').value, 10),
-                    dispatched: false,
-                    receiptReturned: false,
-                };
-                try {
-                    await addDoc(inventoryColRef, newItem);
-                    inventoryForm.reset();
-                    document.getElementById('date').valueAsDate = new Date();
-                } catch (error) {
-                    console.error("新增失敗：", error);
-                    alert('新增失敗，請檢查網路與 Firestore 權限。');
+                if (ticketStr && (Number.isNaN(tickets) || tickets <= 0)) {
+                    errorLines.push(index + 1);
+                    return;
                 }
+                addParticipant(name, tickets);
+                successCount += 1;
             });
-
-            document.getElementById('inventoryTableBody').addEventListener('change', async (e) => {
-                const target = e.target;
-                const docId = target.dataset.id;
-                if (!docId) return;
-                const itemDocRef = doc(db, `/artifacts/${appId}/public/data/inventory/${docId}`);
-                try {
-                    if (target.classList.contains('dispatch-check')) {
-                        await updateDoc(itemDocRef, { dispatched: target.checked });
-                    }
-                    if (target.classList.contains('receipt-check')) {
-                        await updateDoc(itemDocRef, { receiptReturned: target.checked });
-                    }
-                } catch (error) {
-                    console.error('更新失敗：', error);
-                    alert('更新失敗，請檢查 Firestore 規則。');
-                }
-            });
-
-            document.getElementById('inventoryTableBody').addEventListener('click', (e) => {
-                const deleteButton = e.target.closest('.delete-btn');
-                if (deleteButton) {
-                    window.itemToDeleteId = deleteButton.dataset.id;
-                    deleteModal.classList.remove('hidden');
-                }
-            });
-
-            document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
-                window.itemToDeleteId = null;
-                deleteModal.classList.add('hidden');
-            });
-
-            document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
-                const id = window.itemToDeleteId;
-                if (!id) return;
-                try {
-                    const itemDocRef = doc(db, `/artifacts/${appId}/public/data/inventory/${id}`);
-                    await deleteDoc(itemDocRef);
-                } catch (error) {
-                    console.error('刪除失敗：', error);
-                    alert('刪除失敗，請檢查 Firestore 規則。');
-                } finally {
-                    window.itemToDeleteId = null;
-                    deleteModal.classList.add('hidden');
-                }
-            });
-
-            document.getElementById('openBulkModalBtn').addEventListener('click', () => {
-                bulkModal.classList.remove('hidden');
-                bulkStatus.textContent = '';
+            if (successCount) {
+                showBulkStatus(`成功匯入 ${successCount} 筆資料`, true);
                 bulkInput.value = '';
-            });
-            document.getElementById('closeBulkModalBtn').addEventListener('click', () => bulkModal.classList.add('hidden'));
+            }
+            if (errorLines.length) {
+                showBulkStatus(`第 ${errorLines.join('、')} 行格式有誤，請確認`);
+            }
+        });
 
-            document.getElementById('bulkInventoryForm').addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const lines = bulkInput.value.split('\n').filter(line => line.trim() !== '');
-                const validItems = [];
-                const errors = [];
-                lines.forEach((line, i) => {
-                    const parts = line.split(',').map(p => p.trim());
-                    if (parts.length != 4) { errors.push(`第 ${i+1} 行格式錯誤`); return; }
-                    const [dateStr, customer, typeStr, qtyStr] = parts;
-                    const qty = parseInt(qtyStr, 10);
-                    if (!qty || qty <= 0) { errors.push(`第 ${i+1} 行數量錯誤`); return; }
-                    let dateToStore = null;
-                    const typeMap = { '進貨':'in', '出貨':'out' };
-                    const t = typeMap[typeStr];
-                    if (!t) { errors.push(`第 ${i+1} 行類型錯誤`); return; }
-                    const dateParts = dateStr.split('/');
-                    if (dateParts.length === 2) {
-                        const y = new Date().getFullYear();
-                        const m = parseInt(dateParts[0],10); const d = parseInt(dateParts[1],10);
-                        if (m>=1 && m<=12 && d>=1 && d<=31) dateToStore = `${y}-${String(m).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
-                    } else if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-                        dateToStore = dateStr;
-                    }
-                    if (!dateToStore) { errors.push(`第 ${i+1} 行日期錯誤`); return; }
-                    validItems.push({ date: dateToStore, customer, type: t, quantity: qty, dispatched: false, receiptReturned: false });
-                });
-                if (errors.length) { bulkStatus.textContent = errors.join('、'); bulkStatus.style.color = 'red'; return; }
-                if (!validItems.length) { bulkStatus.textContent = '請至少輸入一筆有效資料'; bulkStatus.style.color = 'red'; return; }
-                try {
-                    const { writeBatch } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-                    const batch = writeBatch(db);
-                    for (const item of validItems) {
-                        const { doc } = await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js");
-                        const ref = doc(inventoryColRef);
-                        batch.set(ref, item);
-                    }
-                    await batch.commit();
-                    bulkInput.value = '';
-                    bulkStatus.textContent = `成功新增 ${validItems.length} 筆！`;
-                    bulkStatus.style.color = 'green';
-                } catch (err) {
-                    console.error('批量新增失敗：', err);
-                    bulkStatus.textContent = '批量新增失敗，請稍後再試';
-                    bulkStatus.style.color = 'red';
+        sampleBtn.addEventListener('click', () => {
+            const sampleData = ['王小明, 3', '陳美麗, 1', '林家豪, 2', '張婷婷', '劉小安'];
+            bulkInput.value = sampleData.join('\n');
+            showBulkStatus('已載入範例資料，確認後可按「匯入資料」');
+        });
+
+        function buildEntryPool() {
+            const pool = [];
+            participants.forEach((person) => {
+                for (let i = 0; i < person.tickets; i += 1) {
+                    pool.push(person.id);
                 }
             });
+            return pool;
+        }
 
-            // 初始日期
-            document.getElementById('date').valueAsDate = new Date();
+        function updateHistory(name) {
+            const timestamp = new Date().toLocaleString();
+            const item = document.createElement('li');
+            item.className = 'rounded-lg border border-slate-100 bg-white/70 px-3 py-2 shadow-sm';
+            item.innerHTML = `<p class="font-semibold text-slate-800">${name}</p><p class="text-xs text-slate-400">${timestamp}</p>`;
+            if (historyList.firstElementChild && historyList.firstElementChild.textContent === '尚無抽獎紀錄') {
+                historyList.innerHTML = '';
+            }
+            historyList.prepend(item);
+            while (historyList.children.length > 10) {
+                historyList.removeChild(historyList.lastChild);
+            }
+        }
+
+        function animateWinner(name, tickets) {
+            winnerName.textContent = name;
+            winnerTickets.textContent = tickets > 1 ? `擁有 ${tickets} 籤` : '擁有 1 籤';
+            winnerName.classList.remove('winner-highlight');
+            void winnerName.offsetWidth;
+            winnerName.classList.add('winner-highlight');
+        }
+
+        drawBtn.addEventListener('click', () => {
+            if (drawInProgress) return;
+            const pool = buildEntryPool();
+            if (!pool.length) {
+                winnerName.textContent = '請先新增參加者';
+                winnerTickets.textContent = '';
+                return;
+            }
+            drawInProgress = true;
+            drawBtn.disabled = true;
+            drawBtn.classList.add('opacity-60', 'cursor-not-allowed');
+            const duration = 1800;
+            const intervalTime = 120;
+            const startTime = Date.now();
+
+            const animationInterval = setInterval(() => {
+                const randomId = pool[Math.floor(Math.random() * pool.length)];
+                const preview = participants.find(p => p.id === randomId);
+                if (preview) {
+                    winnerName.textContent = preview.name;
+                    winnerTickets.textContent = preview.tickets > 1 ? `擁有 ${preview.tickets} 籤` : '擁有 1 籤';
+                }
+                if (Date.now() - startTime >= duration) {
+                    clearInterval(animationInterval);
+                    const finalId = pool[Math.floor(Math.random() * pool.length)];
+                    const winner = participants.find(p => p.id === finalId);
+                    if (winner) {
+                        animateWinner(winner.name, winner.tickets);
+                        updateHistory(winner.name);
+                        if (removeAfterDraw.checked) {
+                            participants = participants.filter(p => p.id !== winner.id);
+                            renderParticipants();
+                        }
+                    }
+                    drawInProgress = false;
+                    drawBtn.disabled = false;
+                    drawBtn.classList.remove('opacity-60', 'cursor-not-allowed');
+                }
+            }, intervalTime);
         });
+
+        renderParticipants();
     </script>
 </body>
 </html>
